@@ -1,5 +1,6 @@
 from typing import List, Dict
 from re import split
+import argparse
 
 class Searcher(object):
     def _calculate_distances(self, words: List[str])->Dict:
@@ -66,5 +67,7 @@ class Searcher(object):
         return self._get_words(largest_pairs)
 
 if __name__=="__main__":
-    solution=Searcher("test.txt").result()
+    parser=argparse.ArgumentParser(description="Variant 13")
+    parser.add_argument("path", metavar="path", type=str)
+    solution=Searcher(parser.parse_args().path).result()
     print(solution)
