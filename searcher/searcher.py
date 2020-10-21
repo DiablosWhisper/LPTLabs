@@ -52,7 +52,7 @@ class Searcher(object):
     def _reduce(self, word: str)->str:
         """
         Reduces length of word
-        :param word: word with length > 30
+        :param word: word with some length
         :return reduced word
         """
         return word[:30] if len(word)>30 else word
