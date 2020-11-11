@@ -1,4 +1,4 @@
-from typing import TypeVar
+from typing import TypeVar, Tuple
 import argparse
 
 FiniteAutomata=TypeVar("FiniteAutomata")
@@ -10,26 +10,33 @@ class FiniteAutomata(object):
         :param automata: automata to compare
         :return equivalence of automatas
         """
-        queue, visited=[(self._incipient, other._incipient)], []
+        queue, visited=[(self._start, other._start)], []
         while queue:
-            u, v=queue.pop()
-            if self._is_end(u)!=other._is_end(v):
+            state1, state2=queue.pop()
+            if self._is_end(state1)!=other._is_end(state2):
                 return False
-            visited.append((u, v))
-            for c in self._symbols:
-                other_rule=other._rules.get((v, c))
-                self_rule=self._rules.get((u, c))
-                if (self_rule, other_rule) not in visited:
-                    queue.append((self_rule, other_rule))
+            visited.append((state1, state2))
+            for symbol in self._symbols:
+                pair=(other[(state2, symbol)], 
+                self[(state2, symbol)])
+                if pair not in visited:
+                    queue.append(pair)
         return True
     def _is_end(self, state: str)->bool:
         """
         Defines whether the state is final
-        :param state: staet of automata
+        :param state: state of automata
         :return whether the state is final
         """
         return state in self._terminal
 
+    def __getitem__(self, rule: Tuple)->object:
+        """
+        Returns next state using the current rule
+        :param rule: rule for transition
+        :return state
+        """
+        return self._rules.get(rule)
     def __init__(self, path: str)->None:
         """
         Reads configuration file for finite automata
@@ -41,8 +48,8 @@ class FiniteAutomata(object):
         for line in open(path, "r").readlines()]
 
         "[Divide configuration into peaces]"
-        self._incipient=self._configuration[2][0]
         self._symbols, self._states=set(), set()
+        self._start=self._configuration[2][0]
         self._terminal=self._configuration[3]
         self._rules={tuple(rule[:2]): rule[2]
         for rule in self._configuration[4:]}
