@@ -41,15 +41,6 @@ class Searcher(object):
         """
         return list(set([word for pair in words
         for word in pair]))
-    def __init__(self, path: str)->None:
-        """
-        Reads fields from file and stores only unique words
-        :param path: path to file
-        :return None
-        """
-        self._words=list(set([self._reduce(word) for line in open(path, "r") 
-        for word in split(r"[^a-zA-Z]+", line)]))[1:]
-        self._max_distance=0
     def _reduce(self, word: str)->str:
         """
         Reduces length of word
@@ -66,8 +57,19 @@ class Searcher(object):
         largest_pairs=self._get_pairs(calculated_distances)
         return self._get_words(largest_pairs)
 
+    def __init__(self, path: str)->None:
+        """
+        Reads fields from file and stores only unique words
+        :param path: path to file
+        :return None
+        """
+        self._words=list(set([self._reduce(word) for line in open(path, "r") 
+        for word in split(r"[^a-zA-Z]+", line)]))[1:]
+        self._max_distance=0
+
 if __name__=="__main__":
     parser=argparse.ArgumentParser(description="Variant 13")
     parser.add_argument("path", metavar="path", type=str)
+    
     solution=Searcher(parser.parse_args().path).result()
     print(solution)

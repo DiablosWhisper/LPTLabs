@@ -1,0 +1,8 @@
+3
+3
+s1
+s2 s1
+s0 a s0
+s0 c s1
+s0 b s1
+s1 c s2
