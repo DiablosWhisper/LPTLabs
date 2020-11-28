@@ -1,12 +1,12 @@
 from typing import TypeVar, Tuple
 import argparse
 
-FiniteAutomata=TypeVar("FiniteAutomata")
+FiniteAutomat=TypeVar("FiniteAutomat")
 
-class FiniteAutomata(object):
-    def compare(self, other: FiniteAutomata)->bool:
+class FiniteAutomat(object):
+    def compare(self, other: FiniteAutomat)->bool:
         """
-        Compares two automatas for equivalence
+        Compares two automata for equivalence
         :param automata: automata to compare
         :return equivalence of automatas
         """
@@ -18,14 +18,14 @@ class FiniteAutomata(object):
             visited.append((state1, state2))
             for symbol in self._symbols:
                 pair=(other[(state2, symbol)], 
-                self[(state2, symbol)])
+                self[(state1, symbol)])
                 if pair not in visited:
                     queue.append(pair)
         return True
     def _is_end(self, state: str)->bool:
         """
         Defines whether the state is final
-        :param state: state of automata
+        :param state: state of automat
         :return whether the state is final
         """
         return state in self._terminal
@@ -39,7 +39,7 @@ class FiniteAutomata(object):
         return self._rules.get(rule)
     def __init__(self, path: str)->None:
         """
-        Reads configuration file for finite automata
+        Reads configuration file for finite automat
         :param path: path to file with configuration
         :return None
         """
@@ -65,9 +65,9 @@ class FiniteAutomata(object):
 
 if __name__=="__main__":
     parser=argparse.ArgumentParser(description="Variant 13")
-    parser.add_argument("automata1", metavar="path", type=str)
-    parser.add_argument("automata2", metavar="path", type=str)
+    parser.add_argument("automat1", metavar="path", type=str)
+    parser.add_argument("automat2", metavar="path", type=str)
 
-    second=FiniteAutomata(parser.parse_args().automata2)
-    first=FiniteAutomata(parser.parse_args().automata1)
+    second=FiniteAutomat(parser.parse_args().automat2)
+    first=FiniteAutomat(parser.parse_args().automat1)
     print(first.compare(second))
