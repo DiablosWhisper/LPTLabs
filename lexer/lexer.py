@@ -110,7 +110,7 @@ class Lexer(object):
             self._state=self.State.INITIAL
         else:
             self._current.relate_to=self.Class.UNKNOWN
-    def _third_block(self, symbol: str)->None:
+    def _close_lexeme(self, symbol: str)->None:
         """
         Third big block of if statements
         :param symbol: symbol to analyze
@@ -128,7 +128,7 @@ class Lexer(object):
             self._current.relate_to=self.Class.UNKNOWN
             self._state=self.State.ERROR
 
-    def _number_of_word_lexeme(self, symbol: str)->None:
+    def _number_or_word_lexeme(self, symbol: str)->None:
         """
         Describes number of word lexeme
         :return None
@@ -140,7 +140,7 @@ class Lexer(object):
                 self._current.relate_to=self.Class.WORD
                 self._state=self.State.WORD
             else:
-                self._third_block(symbol)
+                self._close_lexeme(symbol)
     def _hex_decimal_lexeme(self, symbol: str)->None:
         """
         Describes hex decimal lexeme
@@ -149,7 +149,7 @@ class Lexer(object):
         if symbol in EMPTY:
             self._state=self.State.INITIAL
         elif symbol not in HEX_DECIMALS:
-            self._third_block(symbol)
+            self._close_lexeme(symbol)
     def _preprocess_lemexe(self, symbol: str)->None:
         """
         Describes preprocess lexeme
@@ -203,7 +203,7 @@ class Lexer(object):
         elif symbol in EMPTY:
             self._state=self.State.INITIAL
         elif symbol not in DECIMALS:
-            self._third_block(symbol)
+            self._close_lexeme(symbol)
     def _comment_lexeme(self, symbol: str)->None:
         """
         Describes comment lexeme
@@ -219,7 +219,7 @@ class Lexer(object):
         if symbol in EMPTY:
             self._state=self.State.INITIAL
         elif symbol not in DECIMALS:
-            self._third_block(symbol)
+            self._close_lexeme(symbol)
     def _error_lexeme(sefl, symbol: str)->None:
         """
         Describes error lexeme
@@ -279,7 +279,7 @@ class Lexer(object):
                 self._preprocess_lemexe(symbol)
             elif self._state==self.State.DELIMITER: pass
             elif self._state==self.State.NUMBER_OR_WORD:
-                self._number_of_word_lexeme(symbol)
+                self._number_or_word_lexeme(symbol)
             elif self._state==self.State.HEX_DECIMAL:
                 self._hex_decimal_lexeme(symbol)
             elif self._state==self.State.WORD_BEGIN:
