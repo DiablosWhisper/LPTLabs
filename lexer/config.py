@@ -1,3 +1,5 @@
+WORD="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_0123456789"
+
 RESERVED_WORDS="""and double not_eq throw and_eq dynamic_cast
 operator true asm else or try auto enum or_eq typedef bitand
 explicit private typeid bitor extern protected typename 
@@ -12,9 +14,7 @@ delete template""".split()
 
 HEX_DECIMALS="0123456789ABCDEFabcdef"
 
-WORD="""ABCDEFGHIJKLMNOPQRSTUVWXYZ
-abcdefghijklmnopqrstuvwxyz
-_0123456789"""
+COMMENTS=["//", "/*", "*/"]
 
 HEX_LETTERS="ABCDEFabcdef"
 

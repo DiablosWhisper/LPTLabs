@@ -1,7 +1,7 @@
-from config import (RESERVED_WORDS, HEX_DECIMALS, WORD, EMPTY,
-HEX_LETTERS, OPERATORS, DELIMITERS, DECIMALS, STRING)
+from config import (RESERVED_WORDS, HEX_DECIMALS, WORD, COMMENTS,
+HEX_LETTERS, OPERATORS, DELIMITERS, DECIMALS, STRING, EMPTY)
+from enum import Enum, auto
 from typing import List
-from enum import Enum
 import argparse
 
 class Lexer(object):
@@ -29,28 +29,12 @@ class Lexer(object):
             """
             self.relate_to, self.lexeme="", ""
 
-    class Class(Enum):
-        "[Represents set of lexeme classes]"
-        OPERATOR, DECIMAL, HEX_DECIMAL, IDENTIFIER=1, 2, 3, 9
-        DELIMITER, COMMENT, WORD, RESERVED=5, 6, 7, 8
-        FLOAT, ERROR, STRING, UNKNOWN=4, 10, 11, 12
-        PREPROCESS_DIRECTIVE=13
-
-        def __str__(self)->str:
-            """
-            Returns enum represented as string
-            :return enum represented as string
-            """
-            return self.name
-
     class State(Enum):
         "[Represents states of automat]"
-        INITIAL, OPERATOR, ERROR, DECIMAL=0, 1, 2, 3
-        NUMBER_OR_WORD, WORD, DELIMITER=7, 8, 9
-        HEX_DECIMAL, FLOAT, COMMENT=4, 5, 6
-        WORD_BEGIN, WORD_END=10, 11
-        PREPROCESS_DIRECTIVE=12
-
+        (INITIAL, OPERATOR, ERROR, DECIMAL, HEX_DECIMAL, FLOAT,
+        COMMENT_BEGIN, COMMENT_END, NUMBER_OR_WORD, WORD,
+        DELIMITER, WORD_BEGIN, PREPROCESS_DIRECTIVE, 
+        WORD_END, COMMENT)=[auto() for _ in range(15)]
         def __str__(self)->str:
             """
             Returns enum represented as string
@@ -58,79 +42,31 @@ class Lexer(object):
             """
             return self.name
 
-    def _second_block(self, symbol: str)->None:
-        """
-        Second big block of if statements
-        :param symbol: symbol to analyze
-        :return None
-        """
-        if symbol in DECIMALS:
-            self._current.relate_to=self.Class.DECIMAL
-            self._state=self.State.DECIMAL
-        elif symbol in HEX_LETTERS:
-            self._current.relate_to=self.Class.HEX_DECIMAL
-            self._state=self.State.NUMBER_OR_WORD
-        elif symbol in DELIMITERS:
-            self._current.relate_to=self.Class.DELIMITER
-        elif symbol in WORD:
-            self._current.relate_to=self.Class.WORD
-            self._state=self.State.WORD
-        elif symbol in STRING:
-            self._current.relate_to=self.Class.STRING
-            self._state=self.State.WORD_BEGIN
-        else:
-            self._current.relate_to=self.Class.UNKNOWN
-    def _first_block(self, symbol: str)->None:
-        """
-        First big block of if statements
-        :param symbol: symbol to analyze
-        :return None
-        """
-        if symbol=="#":
-            self._current.relate_to=self.Class.PREPROCESS_DIRECTIVE
-            self._state=self.State.PREPROCESS_DIRECTIVE
-        elif symbol in OPERATORS:
-            self._current.relate_to=self.Class.OPERATOR
-            self._state=self.State.OPERATOR
-        elif symbol in DECIMALS:
-            self._current.relate_to=self.Class.DECIMAL
-            self._state=self.State.DECIMAL
-        elif symbol in HEX_LETTERS:
-            self._current.relate_to=self.Class.HEX_DECIMAL
-            self._state=self.State.NUMBER_OR_WORD
-        elif symbol in DELIMITERS:
-            self._current.relate_to=self.Class.DELIMITER
-        elif symbol in WORD:
-            self._current.relate_to=self.Class.WORD
-            self._state=self.State.WORD
-        elif symbol in STRING:
-            self._current.relate_to=self.Class.STRING
-            self._state=self.State.WORD_BEGIN
-        elif symbol in EMPTY:
-            self._state=self.State.INITIAL
-        else:
-            self._current.relate_to=self.Class.UNKNOWN
-    def _close_lexeme(self, symbol: str)->None:
-        """
-        Third big block of if statements
-        :param symbol: symbol to analyze
-        :return None
-        """
-        if symbol in OPERATORS:
-            self._save_lexeme()
-            self._current.relate_to=self.Class.OPERATOR
-            self._state=self.State.OPERATOR
-        elif symbol in DELIMITERS:
-            self._save_lexeme()
-            self._current.relate_to=self.Class.DELIMITER
-            self._state=self.State.INITIAL
-        else:
-            self._current.relate_to=self.Class.UNKNOWN
-            self._state=self.State.ERROR
+    class Class(Enum):
+        "[Represents set of lexeme classes]"
+        (OPERATOR, WORD, HEX_DECIMAL, FLOAT, DELIMITER, 
+        COMMENT, DECIMAL, PREPROCESS_DIRECTIVE,
+        IDENTIFIER, ERROR, UNKNOWN, RESERVED,
+        STRING)=[auto() for _ in range(13)]
+        def __str__(self)->str:
+            """
+            Returns enum represented as string
+            :return enum represented as string
+            """
+            return self.name
 
-    def _number_or_word_lexeme(self, symbol: str)->None:
+    def _preprocess_directive(self, symbol: str)->None:
         """
-        Describes number of word lexeme
+        Automat behavior at preprocess directive state
+        :param symbol: symbol to analyze
+        :return None
+        """
+        if symbol=="\n":
+            self._state=self.State.INITIAL
+    def _number_or_word(self, symbol: str)->None:
+        """
+        Automat behavior at number or word state
+        :param symbol: symbol to analyze
         :return None
         """
         if symbol in EMPTY:
@@ -140,26 +76,67 @@ class Lexer(object):
                 self._current.relate_to=self.Class.WORD
                 self._state=self.State.WORD
             else:
-                self._close_lexeme(symbol)
-    def _hex_decimal_lexeme(self, symbol: str)->None:
+                if symbol in OPERATORS:
+                    self._save_lexeme()
+                    self._current.relate_to=self.Class.OPERATOR
+                    self._state=self.State.OPERATOR
+                elif symbol in DELIMITERS:
+                    self._save_lexeme()
+                    self._current.relate_to=self.Class.DELIMITER
+                    self._state=self.State.INITIAL
+                else:
+                    self._current.relate_to=self.Class.ERROR
+                    self._state=self.State.ERROR
+    def _comment_begin(self, symbol: str)->None:
         """
-        Describes hex decimal lexeme
+        Automat behavior at comment begin state
+        :param symbol: symbol to analyze
+        :return None
+        """
+        if "*/" in self._current.lexeme:
+            self._save_lexeme()
+            self._state=self.State.INITIAL
+    def _comment_end(self, symbol : str)->None:
+        """
+        Automat behavior at comment end state
+        :param symbol: symbol to analyze
+        :return None
+        """
+        if symbol=="\n":
+            self._state=self.State.INITIAL
+        
+    def _hexdecimal(self, symbol: str)->None:
+        """
+        Automat behavior at hexdecimal state
+        :param symbol: symbol to analyze
         :return None
         """
         if symbol in EMPTY:
             self._state=self.State.INITIAL
         elif symbol not in HEX_DECIMALS:
-            self._close_lexeme(symbol)
-    def _preprocess_lemexe(self, symbol: str)->None:
+            if symbol in OPERATORS:
+                self._save_lexeme()
+                self._current.relate_to=self.Class.OPERATOR
+                self._state=self.State.OPERATOR
+            elif symbol in DELIMITERS:
+                self._save_lexeme()
+                self._current.relate_to=self.Class.DELIMITER
+                self._state=self.State.INITIAL
+            else:
+                self._current.relate_to=self.Class.ERROR
+                self._state=self.State.ERROR
+    def _word_begin(self, symbol: str)->None:
         """
-        Describes preprocess lexeme
+        Automat behavior at word begin state
+        :param symbol: symbol to analyze
         :return None
         """
-        if symbol=="\n":
-            self._state=self.State.INITIAL
-    def _word_end_lexeme(self, symbol: str)->None:
+        if symbol in STRING:
+            self._state=self.State.WORD_END
+    def _word_end(self, symbol: str)->None:
         """
-        Describes word end lexeme
+        Automat behavior at word end state
+        :param symbol: symbol to analyze
         :return None
         """
         if symbol in EMPTY:
@@ -176,22 +153,79 @@ class Lexer(object):
             elif symbol not in STRING:
                 self._current.relate_to=self.Class.UNKNOWN
                 self._state=self.State.ERROR
-    def _operator_lexeme(self, symbol: str)->None:
+    def _operator(self, symbol: str)->None:
         """
-        Describes operator lexeme
+        Automat behavior at operator state
+        :param symbol: symbol to analyze
         :return None
         """
         if symbol in EMPTY:
             self._state=self.State.INITIAL
-        elif (self._current.lexeme+symbol)=="//":
+        elif self._current.lexeme+symbol=="//":
             self._current.relate_to=self.Class.COMMENT
             self._state=self.State.COMMENT
+        elif self._current.lexeme+symbol=="/*":
+            self._current.relate_to=self.Class.COMMENT
+            self._state=self.State.COMMENT_BEGIN
         elif symbol not in OPERATORS:
             self._save_lexeme()
-            self._second_block(symbol)
-    def _decimal_lexeme(self, symbol: str)->None:
+            if symbol in DECIMALS:
+                self._current.relate_to=self.Class.DECIMAL
+                self._state=self.State.DECIMAL
+            elif symbol in HEX_LETTERS:
+                self._current.relate_to=self.Class.HEX_DECIMAL
+                self._state=self.State.NUMBER_OR_WORD
+            elif symbol in DELIMITERS:
+                self._current.relate_to=self.Class.DELIMITER
+                self._state=self.State.DELIMITER
+            elif symbol in WORD:
+                self._current.relate_to=self.Class.WORD
+                self._state=self.State.WORD
+            elif symbol in STRING:
+                self._current.relate_to=self.Class.STRING
+                self._state=self.State.WORD_BEGIN
+            else:
+                self._current.relate_to=self.Class.UNKNOWN
+    def _initial(self, symbol: str)->None:
         """
-        Describes decimal lexeme
+        Automat behavior at initial state
+        :param symbol: symbol to analyze
+        :return None
+        """
+        if self._cold_start: self._cold_start=False
+        elif self._current.lexeme=="." and symbol in DECIMALS:
+            self._current.relate_to=self.Class.FLOAT
+            self._state=self.State.FLOAT
+        else: self._save_lexeme()
+        if self._state!=self.State.FLOAT:
+            if symbol=="#":
+                self._current.relate_to=self.Class.PREPROCESS_DIRECTIVE
+                self._state=self.State.PREPROCESS_DIRECTIVE
+            elif symbol in OPERATORS:
+                self._current.relate_to=self.Class.OPERATOR
+                self._state=self.State.OPERATOR
+            elif symbol in DECIMALS:
+                self._current.relate_to=self.Class.DECIMAL
+                self._state=self.State.DECIMAL
+            elif symbol in HEX_LETTERS:
+                self._current.relate_to=self.Class.HEX_DECIMAL
+                self._state=self.State.NUMBER_OR_WORD
+            elif symbol in DELIMITERS:
+                self._current.relate_to=self.Class.DELIMITER
+            elif symbol in WORD:
+                self._current.relate_to=self.Class.WORD
+                self._state=self.State.WORD
+            elif symbol in STRING:
+                self._current.relate_to=self.Class.STRING
+                self._state=self.State.WORD_BEGIN
+            elif symbol in EMPTY:
+                self._state=self.State.INITIAL
+            else:
+                self._current.relate_to=self.Class.UNKNOWN
+    def _decimal(self, symbol: str)->None:
+        """
+        Automat behavior at decimal state
+        :param symbol: symbol to analyze
         :return None
         """
         if symbol==".":
@@ -203,33 +237,60 @@ class Lexer(object):
         elif symbol in EMPTY:
             self._state=self.State.INITIAL
         elif symbol not in DECIMALS:
-            self._close_lexeme(symbol)
-    def _comment_lexeme(self, symbol: str)->None:
+            if symbol in OPERATORS:
+                self._save_lexeme()
+                self._current.relate_to=self.Class.OPERATOR
+                self._state=self.State.OPERATOR
+            elif symbol in DELIMITERS:
+                self._save_lexeme()
+                self._current.relate_to=self.Class.DELIMITER
+                self._state=self.State.INITIAL
+            else:
+                self._current.relate_to=self.Class.ERROR
+                self._state=self.State.ERROR
+    def _float(self, symbol: str)->None:
         """
-        Describes comment lexeme
-        :return None
-        """
-        if symbol=="\n":
-            self._state=self.State.INITIAL
-    def _float_lexeme(self, symbol: str)->None:
-        """
-        Describes float lexeme
+        Automat behavior at float state
+        :param symbol: symbol to analyze
         :return None
         """
         if symbol in EMPTY:
+            if (self._current.lexeme[-1] not in DECIMALS and
+                self._current.lexeme[-1]!="."):
+                self._current.relate_to=self.Class.ERROR
             self._state=self.State.INITIAL
+        elif symbol=="e" or self._current.lexeme[-1]+symbol=="e-":
+            pass
         elif symbol not in DECIMALS:
-            self._close_lexeme(symbol)
-    def _error_lexeme(sefl, symbol: str)->None:
+            if symbol in OPERATORS:
+                if (self._current.lexeme[-1] not in DECIMALS and
+                self._current.lexeme[-1]!="."):
+                    self._current.relate_to=self.Class.ERROR
+                self._save_lexeme()
+                self._current.relate_to=self.Class.OPERATOR
+                self._state=self.State.OPERATOR
+            elif symbol in DELIMITERS:
+                if (self._current.lexeme[-1] not in DECIMALS and
+                self._current.lexeme[-1]!="."):
+                    self._current.relate_to=self.Class.ERROR
+                self._save_lexeme()
+                self._current.relate_to=self.Class.DELIMITER
+                self._state=self.State.INITIAL
+            else:
+                self._current.relate_to=self.Class.ERROR
+                self._state=self.State.ERROR
+    def _error(self, symbol: str)->None:
         """
-        Describes error lexeme
+        Automat behavior at error state
+        :param symbol: symbol to analyze
         :return None
         """
         if symbol in EMPTY:
             self._state=self.State.INITIAL
-    def _word_lexeme(self, symbol: str)->None:
+    def _word(self, symbol: str)->None:
         """
-        Describes word lexeme
+        Automat behavior at word state
+        :param symbol: symbol to analyze
         :return None
         """
         if symbol in EMPTY:
@@ -249,7 +310,12 @@ class Lexer(object):
                 else:
                     self._current.relate_to=self.Class.UNKNOWN
                     self._state=self.State.ERROR
-
+    def _delimiter(self, symbol: str)->None:
+        """
+        """
+        if symbol in DECIMALS:
+            self._current.relate_to=self.Class.FLOAT
+            self._state=self.State.FLOAT
     def _save_lexeme(self)->None:
         """
         Saves the current lexeme
@@ -268,37 +334,38 @@ class Lexer(object):
         Returns lexeme class objects
         :return lexeme class objects
         """
-        cold_start=True
         for symbol in self._code:
             if self._state==self.State.INITIAL:
-                if cold_start: cold_start=False
-                else: self._save_lexeme()
-                self._first_block(symbol)
-
+                self._initial(symbol)
             elif self._state==self.State.PREPROCESS_DIRECTIVE:
-                self._preprocess_lemexe(symbol)
-            elif self._state==self.State.DELIMITER: pass
+                self._preprocess_directive(symbol)
+            elif self._state==self.State.DELIMITER:
+                self._delimiter(symbol)
             elif self._state==self.State.NUMBER_OR_WORD:
-                self._number_or_word_lexeme(symbol)
+                self._number_or_word(symbol)
             elif self._state==self.State.HEX_DECIMAL:
-                self._hex_decimal_lexeme(symbol)
+                self._hexdecimal(symbol)
             elif self._state==self.State.WORD_BEGIN:
-                if symbol in STRING:
-                    self._state=self.State.WORD_END
+                self._word_begin(symbol)
             elif self._state==self.State.WORD_END:
-                self._word_end_lexeme(symbol)
+                self._word_end(symbol)
             elif self._state==self.State.OPERATOR:
-                self._operator_lexeme(symbol)
+                self._operator(symbol)
             elif self._state==self.State.DECIMAL:
-                self._decimal_lexeme(symbol)
-            elif self._state==self.State.COMMENT:
-                self._comment_lexeme(symbol)
+                self._decimal(symbol)
+            elif self._state==self.State.COMMENT_BEGIN:
+                self._comment_begin(symbol)
+            elif self._state==self.State.COMMENT_END:
+                self._comment_end(symbol)
             elif self._state==self.State.FLOAT:
-                self._float_lexeme(symbol)
+                self._float(symbol)
             elif self._state==self.State.ERROR:
-                self._error_lexeme(symbol)
+                self._error(symbol)
             elif self._state==self.State.WORD:
-                self._word_lexeme(symbol)
+                self._word(symbol)
+            elif self._state==self.State.COMMENT:
+                if symbol=="\n":
+                    self._state=self.State.INITIAL
             self._current.lexeme+=symbol
         self._save_lexeme()
         return self
@@ -322,6 +389,7 @@ class Lexer(object):
         self._code=open(path, "r").read()
         self._state=self.State.INITIAL
         self._current=self.Lexeme("")
+        self._cold_start=True
         self._lexemes=[]
 
 if __name__=="__main__":

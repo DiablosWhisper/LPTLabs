@@ -1,30 +1,26 @@
-//Some Comment
 #include <iostream>
 using namespace std;
+#define PI
+int main() {
+    int num, originalNum, remainder=3.34, result = 32.4e4;
+    cout << "Enter a three-digit integer: ";
+    cin >> num;
+    originalNum = num;
 
-#define getmax(a,b) a>b?a:b
-//Some Comment
-int calculatePower(int, int);
-int main()
-{
-    int base, powerRaised, result;
+    while (originalNum != 0) {
+        // remainder contains the last digit
+        remainder = originalNum % 10;
+        
+        result += remainder * remainder * remainder;
+        
+        // removing last digit from the orignal number
+        originalNum /= 10;
+    }
 
-    cout << "Enter base number: ";
-    cin >> base;
-
-    cout << "Enter power number(positive integer): ";
-    cin >> powerRaised;
-
-    result = calculatePower(base, powerRaised);
-    cout << base << "^" << powerRaised << " = " << result;
+    if (result == num)
+        cout << num << " is an Armstrong number.";
+    else
+        cout << num << " is not an Armstrong number.";
 
     return 0;
-}
-
-int calculatePower(int base, int powerRaised)
-{
-    if (powerRaised != 0)
-        return (base*calculatePower(base, powerRaised-1));
-    else
-        return 1;
 }
