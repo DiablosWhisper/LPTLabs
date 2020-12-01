@@ -193,7 +193,7 @@ class Lexer(object):
         :return None
         """
         if self._cold_start: self._cold_start=False
-        elif self._current.lexeme=="." and symbol in DECIMALS:
+        elif self._current.lexeme=="." and symbol in DECIMALS+"e":
             self._current.relate_to=self.Class.FLOAT
             self._state=self.State.FLOAT
         else: self._save_lexeme()
@@ -255,8 +255,9 @@ class Lexer(object):
         :return None
         """
         if symbol in EMPTY:
-            if (self._current.lexeme[-1] not in DECIMALS and
-                self._current.lexeme[-1]!="."):
+            if self._current.lexeme[-1] not in DECIMALS and self._current.lexeme[0] not in DECIMALS:
+                self._current.relate_to=self.Class.ERROR
+            elif (self._current.lexeme[0]=="." and self._current.lexeme[1]=="e"):
                 self._current.relate_to=self.Class.ERROR
             self._state=self.State.INITIAL
         elif symbol=="e" or self._current.lexeme[-1]+symbol=="e-":
@@ -270,8 +271,9 @@ class Lexer(object):
                 self._current.relate_to=self.Class.OPERATOR
                 self._state=self.State.OPERATOR
             elif symbol in DELIMITERS:
-                if (self._current.lexeme[-1] not in DECIMALS and
-                self._current.lexeme[-1]!="."):
+                if self._current.lexeme[-1] not in DECIMALS:
+                    self._current.relate_to=self.Class.ERROR
+                elif (self._current.lexeme[0]=="." and self._current.lexeme[1]=="e"):
                     self._current.relate_to=self.Class.ERROR
                 self._save_lexeme()
                 self._current.relate_to=self.Class.DELIMITER
@@ -393,7 +395,8 @@ class Lexer(object):
         self._lexemes=[]
 
 if __name__=="__main__":
-    parser=argparse.ArgumentParser(description="Variant C++")
-    parser.add_argument("path", metavar="path", type=str)
+    # parser=argparse.ArgumentParser(description="Variant C++")
+    # parser.add_argument("path", metavar="path", type=str)
     
-    Lexer(parser.parse_args().path).analyze().result()
+    # Lexer(parser.parse_args().path).analyze().result()
+    Lexer("D:/Programming/LPTLabs/lexer/test.txt").analyze().result()

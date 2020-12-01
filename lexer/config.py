@@ -18,7 +18,7 @@ COMMENTS=["//", "/*", "*/"]
 
 HEX_LETTERS="ABCDEFabcdef"
 
-OPERATORS="+-*/=%|&^><~!"
+OPERATORS="+-*/=%|&^><~!?"
 
 DELIMITERS="}{)(][,:.;"
 

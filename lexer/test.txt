@@ -1,26 +1,8 @@
-#include <iostream>
-using namespace std;
-#define PI
-int main() {
-    int num, originalNum, remainder=3.34, result = 32.4e4;
-    cout << "Enter a three-digit integer: ";
-    cin >> num;
-    originalNum = num;
-
-    while (originalNum != 0) {
-        // remainder contains the last digit
-        remainder = originalNum % 10;
-        
-        result += remainder * remainder * remainder;
-        
-        // removing last digit from the orignal number
-        originalNum /= 10;
-    }
-
-    if (result == num)
-        cout << num << " is an Armstrong number.";
-    else
-        cout << num << " is not an Armstrong number.";
-
-    return 0;
-}
+12.7e-3;
+a<=b;
+a>>=b;
+a%=b;
+/*
+ comment
+*/
+//comment
