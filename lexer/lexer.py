@@ -395,8 +395,7 @@ class Lexer(object):
         self._lexemes=[]
 
 if __name__=="__main__":
-    # parser=argparse.ArgumentParser(description="Variant C++")
-    # parser.add_argument("path", metavar="path", type=str)
+    parser=argparse.ArgumentParser(description="Variant C++")
+    parser.add_argument("path", metavar="path", type=str)
     
-    # Lexer(parser.parse_args().path).analyze().result()
-    Lexer("D:/Programming/LPTLabs/lexer/test.txt").analyze().result()
+    Lexer(parser.parse_args().path).analyze().result()
