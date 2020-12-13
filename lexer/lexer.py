@@ -315,7 +315,9 @@ class Lexer(object):
     def _delimiter(self, symbol: str)->None:
         """
         """
-        if symbol in DECIMALS:
+        if symbol=="\n":
+            self._state=self.State.INITIAL
+        elif symbol in DECIMALS:
             self._current.relate_to=self.Class.FLOAT
             self._state=self.State.FLOAT
     def _save_lexeme(self)->None:
